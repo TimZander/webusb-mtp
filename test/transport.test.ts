@@ -1,6 +1,6 @@
 // Spec: mtp-transport › "The MTP interface is identified", "Setup claims the interface in
 // order", "Setup failures name their step", "Setup calls time out", "Multi-transfer responses are
-// read completely", "A data phase's header goes in its own USB packet", "Events are read",
+// read completely", "A data phase's header goes in its own USB packet", "Events are read", "Event reading outlasts bad reads",
 // "The transport is released on every exit".
 import { describe, it, expect, vi } from 'vitest'
 import { MtpTransport, UsbSetupError, findMtpInterface } from '../src/transport.js'
@@ -329,6 +329,22 @@ describe('spec scenarios (mtp-transport)', () => {
     t.startEvents((ev) => seen.push([ev.code, ev.params]))
     await new Promise((r) => setTimeout(r, 10))
     expect(seen).toEqual([[0x4002, [9]]])
+    await t.close()
+  })
+
+  it("passes on the next event after the caller's callback throws", async () => {
+    const { fake, t } = await openTransport({})
+    const ev = (n: number) => encodeContainer({ type: ContainerType.Event, code: 0x4002, transactionId: 0, params: [n] })
+    const answers = [ev(1), ev(2)].map((b) => ({ status: 'ok', data: new DataView(b.buffer) }) as USBInTransferResult)
+    fake.device.transferIn = (ep: number) =>
+      ep === INTERRUPT_IN && answers.length > 0 ? Promise.resolve(answers.shift()!) : new Promise(() => {})
+    const seen: number[] = []
+    t.startEvents((e) => {
+      seen.push(e.params[0])
+      if (e.params[0] === 1) throw new Error('callback failed')
+    })
+    await new Promise((r) => setTimeout(r, 10))
+    expect(seen).toEqual([1, 2])
     await t.close()
   })
 })

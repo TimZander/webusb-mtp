@@ -94,6 +94,7 @@ describe('code names', () => {
     expect(responseName(0x2003)).toBe('SessionNotOpen')
     expect(responseName(0x2fff)).toBe('Unknown response')
     expect(formatCode(0x101b)).toBe('0x101B')
+    expect(formatCode(0x67)).toBe('0x0067')
   })
 })
 

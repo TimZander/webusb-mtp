@@ -230,6 +230,7 @@ describe('MtpSession write diagnostics', () => {
     const dataOut: [number, number][] = []
     const written: [number, number][] = []
     const payloads: Uint8Array[] = []
+    const writtenPayloads: Uint8Array[] = []
     const session = new MtpSession(transport, {
       timeoutMs: 20,
       writeTimeoutMs: 40,
@@ -238,19 +239,23 @@ describe('MtpSession write diagnostics', () => {
         dataOut.push([code, bytes.length])
         payloads.push(bytes)
       },
-      onDataWritten: (code, bytes) => written.push([code, bytes.length]),
+      onDataWritten: (code, bytes) => {
+        written.push([code, bytes.length])
+        writtenPayloads.push(bytes)
+      },
     })
     await session.openSession()
-    return { fake, session, notes, dataOut, written, payloads }
+    return { fake, session, notes, dataOut, written, payloads, writtenPayloads }
   }
 
   it('reports the file info before and after the device accepts it', async () => {
-    const { session, dataOut, written, payloads } = await writer({})
+    const { session, dataOut, written, payloads, writtenPayloads } = await writer({})
     await session.sendObjectInfo(STORAGE, 1, info)
     expect(dataOut).toHaveLength(1)
     expect(dataOut[0][0]).toBe(0x100c)
     expect(written).toEqual(dataOut)
     expect(Array.from(payloads[0])).toEqual(Array.from(encodeObjectInfo(info)))
+    expect(Array.from(writtenPayloads[0])).toEqual(Array.from(encodeObjectInfo(info)))
   })
 
   it('catches an answer that comes before the data is accepted, and closes the device', async () => {

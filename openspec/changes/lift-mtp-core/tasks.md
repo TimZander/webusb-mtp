@@ -7,8 +7,9 @@
 ## 2. Code
 
 - [ ] 2.1 Copy `container.ts`, `dataset.ts`, `transport.ts`, `session.ts` into `src/`, with relative imports and generic wording in comments and notes
-- [ ] 2.2 Add `src/webusb.ts` with `webUsbAvailable()` and `src/index.ts` exporting the public API
-- [ ] 2.3 Tests, type check and build pass
+- [ ] 2.2 Make `DataWriter.string` throw for a string of over 254 UTF-16 units, naming the limit (the one behaviour change)
+- [ ] 2.3 Add `src/webusb.ts` with `webUsbAvailable()` and `src/index.ts` exporting the public API
+- [ ] 2.4 Tests, type check and build pass
 
 ## 3. Package and CI
 

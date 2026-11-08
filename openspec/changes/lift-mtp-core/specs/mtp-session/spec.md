@@ -48,20 +48,25 @@ to response.
 ### Requirement: A refused operation leaves the session usable
 When the device answers an operation with a code other than OK, the session SHALL throw a
 response error naming the operation and the response by name and code, and SHALL stay usable
-for further operations.
+for further operations, except an early answer to a write (below).
 
 #### Scenario: Storage listing refused
 - **WHEN** GetStorageIDs is answered `0x2002`
 - **THEN** a response error for `GetStorageIDs (0x1004)` and `GeneralError (0x2002)` is thrown, the session isn't broken, and CloseSession can still be sent
 
 ### Requirement: A broken pipe stops the session
-When an operation fails with anything but a response error (a transfer throws, an operation
-times out, or the device sends a container that isn't the expected response), the session SHALL
-mark itself broken, close the device and refuse every later operation without sending it.
+When an exchange fails before its response is read (a transfer throws, the operation times out,
+or the device sends a container that isn't the expected response), the session SHALL mark itself
+broken, close the device and refuse every later operation without sending it. Failures after an
+OK response (no data, undecodable data) SHALL leave the session usable.
 
 #### Scenario: Transfer throws
 - **WHEN** a transfer throws during GetStorageInfo
 - **THEN** the error is thrown, the session is broken, the device is closed, and a later CloseSession is refused without being sent
+
+#### Scenario: Undecodable data
+- **WHEN** GetStorageInfo is answered OK with two bytes of data
+- **THEN** a decoding error is thrown, the session isn't broken, and CloseSession can still be sent
 
 ### Requirement: A stale session can be reopened
 When OpenSession is answered SessionAlreadyOpen (`0x201E`), left by another program, the session

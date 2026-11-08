@@ -56,7 +56,7 @@ Each lifted requirement, and the app requirement it came from (by title):
 | mtp-session: A write without an answer is diagnosed | watch-transfer: "Steps time out" (scenario "A write gets no answer") |
 | mtp-session: A stale session can be reopened | watch-usb-probe: "A stale session is reopened" (the session's part; the retry stays with the caller) |
 | mtp-session: A refused operation leaves the session usable; A broken pipe stops the session | watch-usb-probe: "Failures stop dependent steps and still clean up" (the session's part) |
-| mtp-session: Device identifiers reach only the caller | watch-usb-probe: "Logs omit device serial numbers" (the library logs nothing; redaction stays with the caller) |
+| mtp-transport: Device identifiers reach only the caller | watch-usb-probe: "Logs omit device serial numbers" (the library logs nothing; redaction stays with the caller) |
 | mtp-transport: The transport is released on every exit | watch-transfer: "The watch is always released" (the transport's part) |
 
 New requirements, written from the app's tests rather than its specs: all of `mtp-codec`;

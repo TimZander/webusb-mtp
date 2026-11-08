@@ -1,0 +1,39 @@
+# Spec conventions
+
+How specs are written in this repository. Read this before writing or changing a spec.
+(Created by sdd-init as a starting point; it belongs to this repository, so edit it freely.)
+
+## Capabilities
+
+- One capability per folder in `openspec/specs/<capability>/spec.md`, named for what it does
+  (`checkout`, `export`), not for the code that does it.
+- Each spec starts with `## Purpose`: one or two sentences on what the capability is for, at
+  least 50 characters. A change that creates a capability puts it at the top of the delta;
+  otherwise the archive writes a placeholder that strict validation rejects.
+
+## Requirements
+
+- A requirement states one rule with SHALL. Descriptive text gets no SHALL.
+- A requirement's text (everything above its first scenario) stays under 500 characters.
+  OpenSpec 1.14.1's strict validation fails longer ones; 1.14.0 only noted them. Move examples
+  and edge cases into scenarios, and split a long rule into several requirements.
+- Every requirement has at least one scenario whose THEN is observable: an output, a file, a
+  response, a page, an exit status.
+- Scenarios use illustrative data, never values copied from real content that may change.
+- Something the owner hasn't decided is not a requirement: it is an open question in the
+  change's `design.md`, with the assumption the change proceeds on.
+
+## Changes
+
+- A change carries `proposal.md` (why and scope), its deltas, `design.md` when there are
+  decisions or open questions, and `tasks.md`.
+- A task left undone on purpose stays unticked and says why on its line:
+  `- [ ] 4.1 … — not done: <reason>`. The archive keeps it as it is.
+- A `MODIFIED` requirement holds the requirement's full text, with every scenario it keeps.
+- `base-pins.json` records the main-spec text each delta was written against
+  (`npm run spec:pin -- <change>`). Re-pin after every delta edit; never hand-edit it.
+- Tests cite the requirement they verify.
+
+## Project terms
+
+<!-- Terms, IDs and shared rules every spec in this repository uses. -->

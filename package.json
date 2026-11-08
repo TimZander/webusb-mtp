@@ -1,0 +1,14 @@
+{
+  "name": "webusb-mtp",
+  "private": true,
+  "devDependencies": {
+    "@fission-ai/openspec": "1.14.1"
+  },
+  "scripts": {
+    "openspec": "bash scripts/sdd/openspec.sh",
+    "spec:validate": "bash scripts/sdd/openspec.sh validate --all --strict",
+    "spec:check": "bash scripts/sdd/check-specs.sh",
+    "spec:pin": "node scripts/sdd/sdd-specs.mjs pin",
+    "prepare": "node scripts/sdd/setup-agent-skills.mjs"
+  }
+}

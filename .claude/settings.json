@@ -1,0 +1,28 @@
+{
+  "env": {
+    "OPENSPEC_TELEMETRY": "0"
+  },
+  "extraKnownMarketplaces": {
+    "tzander-skills": {
+      "source": {
+        "source": "github",
+        "repo": "TimZander/claude"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "sdd@tzander-skills": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/sdd/session-start.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}

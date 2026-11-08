@@ -19,6 +19,6 @@
 
 ## 4. Review and records
 
-- [ ] 4.1 Conformance review
-- [ ] 4.2 ADRs and lessons
+- [x] 4.1 Conformance review
+- [x] 4.2 ADRs and lessons
 - [ ] 4.3 Scan the diff for private material from the source app

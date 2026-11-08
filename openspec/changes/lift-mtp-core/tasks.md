@@ -1,7 +1,7 @@
 ## 1. Tests first
 
 - [ ] 1.1 Copy the four modules' tests and the fake USB device into `test/`, with relative imports and illustrative device names
-- [ ] 1.2 Add tests for the scenarios the app's tests don't cover: stale session reopened, events unblocking a write, WebUSB availability, no console output, transaction ids, a read with no data, an unexpected container breaking the session, an answer just before the write completes, a hanging control request, abort, an over-long string, and the codec scenarios' exact values where missing
+- [ ] 1.2 Add tests for the scenarios the app's tests don't cover: stale session reopened, events unblocking a write, WebUSB availability, no console output, transaction ids, a read with no data, an unexpected container breaking the session, an answer just before the write completes, a hanging control request, abort, an over-long string, undecodable data leaving the session usable, and the codec scenarios' exact values where missing
 - [ ] 1.3 See the new tests fail before the code is in place
 
 ## 2. Code

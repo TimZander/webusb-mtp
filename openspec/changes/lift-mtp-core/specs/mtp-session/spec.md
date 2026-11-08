@@ -57,8 +57,9 @@ for further operations, except an early answer to a write (below).
 ### Requirement: A broken pipe stops the session
 When an exchange fails before its response is read (a transfer throws, the operation times out,
 or the device sends a container that isn't the expected response), the session SHALL mark itself
-broken, close the device and refuse every later operation without sending it. Failures after an
-OK response (no data, undecodable data) SHALL leave the session usable.
+broken, close the device and refuse every later operation without sending it; so does a caller's
+callback that throws. Decoding an OK response's data (no data, undecodable data) SHALL leave the
+session usable. An early answer to a write is covered below.
 
 #### Scenario: Transfer throws
 - **WHEN** a transfer throws during GetStorageInfo

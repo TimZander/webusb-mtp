@@ -27,6 +27,10 @@ next id of a counter that starts at `1` and that a successful OpenSession resets
 - **WHEN** GetDeviceInfo, OpenSession, GetStorageIDs and GetStorageInfo are sent in turn
 - **THEN** their transaction ids are `0`, `0`, `1` and `2`
 
+#### Scenario: Ids after reopening
+- **WHEN** GetStorageIDs and CloseSession are sent after OpenSession, then OpenSession and GetStorageIDs again
+- **THEN** their transaction ids are `1`, `2`, `0` and `1`
+
 ### Requirement: A read answered without data is reported
 When an operation that returns data is answered OK with no data phase, the session SHALL throw an
 error saying the operation returned no data, and stay usable; GetPartialObject SHALL return empty
@@ -108,7 +112,11 @@ device and throw a response error marked early, even when the answer was OK.
 
 #### Scenario: Answer before the data
 - **WHEN** the device answers SendObjectInfo with `0x2005` before taking its ObjectInfo
-- **THEN** a note says the device answered before accepting the data, a response error with `0x2005` is thrown, the data is never reported as written, and the device is closed
+- **THEN** a note says the device answered before accepting the data, a response error with `0x2005` marked early is thrown, the data is never reported as written, and the device is closed
+
+#### Scenario: Early OK
+- **WHEN** the device answers SendObjectInfo with `0x2001` before taking its ObjectInfo
+- **THEN** a response error with `0x2001` marked early is thrown, and the device is closed
 
 #### Scenario: Answer right after the data
 - **WHEN** the device's OK answer arrives before the last data packet's write completes, and the write completes within 1 second after it
@@ -131,6 +139,10 @@ outcomes. Other operations' timeouts SHALL send neither.
 #### Scenario: A control request hangs
 - **WHEN** a write times out and the device never answers the status request
 - **THEN** after 2 seconds a note says the status couldn't be read, the cancel is still tried, and the device is closed
+
+#### Scenario: A note callback throws
+- **WHEN** a write times out and the caller's note callback throws
+- **THEN** the timeout error is thrown, the session is broken and the device is closed
 
 #### Scenario: Read times out
 - **WHEN** GetStorageIDs times out

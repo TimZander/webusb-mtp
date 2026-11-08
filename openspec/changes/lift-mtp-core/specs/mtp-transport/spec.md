@@ -82,7 +82,7 @@ step and marked as timed out.
 ### Requirement: Multi-transfer responses are read completely
 Reading a container SHALL skip zero-length transfers before it and keep reading until the length
 its header states has arrived, without waiting for a trailing zero-length packet. Bytes read past
-the end of one container SHALL begin the next.
+the end of one container SHALL begin the next. A header stating fewer than 12 bytes SHALL throw.
 
 #### Scenario: Data phase larger than one transfer
 - **WHEN** a data phase of over 400 bytes arrives in 64-byte transfers
@@ -91,6 +91,10 @@ the end of one container SHALL begin the next.
 #### Scenario: Data phase ending with a zero-length packet
 - **WHEN** a data phase's length is an exact multiple of the bulk IN packet size and a zero-length packet follows it
 - **THEN** the data is read whole, and the response is read next
+
+#### Scenario: Impossible length
+- **WHEN** a container's header states a length of 8
+- **THEN** reading throws an error saying the length is impossible
 
 #### Scenario: Exact multiple without a zero-length packet
 - **WHEN** a data phase's length is an exact multiple of the packet size and the response arrives in the same transfer, with no zero-length packet between
@@ -122,8 +126,8 @@ lose a payload that shares the header's packet.
 Once started, the transport SHALL keep reading the interrupt endpoint and pass each decodable
 event container to the caller until the transport is closed, so a device that waits for its
 events to be read before answering isn't left waiting. A stalled endpoint SHALL be cleared and
-read again after 20 ms; a malformed event SHALL be skipped; a read or clear that throws ends
-event reading.
+read again after 20 ms; a read with another status that isn't OK, or shorter than a header, and
+a malformed event SHALL be skipped; a read or clear that throws ends event reading.
 
 #### Scenario: Device holds its answer until its event is read
 - **WHEN** events are being read and the device queues an ObjectAdded event after SendObjectInfo, answering only once that event has been read

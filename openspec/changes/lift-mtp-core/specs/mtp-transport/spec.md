@@ -62,12 +62,13 @@ each step done to an optional callback.
 
 ### Requirement: Setup failures name their step
 When a setup call throws, setup SHALL fail with a setup error naming the step (open, select
-configuration, claim interface, select alternate setting) and carrying the cause, so the caller
-can explain likely causes for its platform. The library itself SHALL give no platform hints.
+configuration, claim interface, select alternate setting: `open`, `selectConfiguration`,
+`claimInterface`, `selectAlternateInterface`) and carrying the cause, so the caller can explain
+likely causes. The library SHALL give no platform hints.
 
 #### Scenario: Claim refused
 - **WHEN** claiming the interface throws `Unable to claim interface.`
-- **THEN** setup fails with a setup error whose step is claim interface, not marked as timed out, whose message includes that text
+- **THEN** setup fails with a setup error whose step is `claimInterface`, not marked as timed out, whose message includes that text
 
 ### Requirement: Setup calls time out
 Each setup call SHALL complete within a time limit, 10 seconds unless the caller sets another.
@@ -76,7 +77,7 @@ step and marked as timed out.
 
 #### Scenario: Claiming never completes
 - **WHEN** claiming the interface doesn't complete within the limit
-- **THEN** setup fails with a setup error for claim interface marked as timed out, and the device is closed
+- **THEN** setup fails with a setup error for `claimInterface` marked as timed out, and the device is closed
 
 ### Requirement: Multi-transfer responses are read completely
 Reading a container SHALL skip zero-length transfers before it and keep reading until the length
@@ -120,8 +121,9 @@ lose a payload that shares the header's packet.
 ### Requirement: Events are read
 Once started, the transport SHALL keep reading the interrupt endpoint and pass each decodable
 event container to the caller until the transport is closed, so a device that waits for its
-events to be read before answering isn't left waiting. A stalled endpoint SHALL be cleared, with
-a short wait before the next read; a malformed event SHALL be skipped.
+events to be read before answering isn't left waiting. A stalled endpoint SHALL be cleared and
+read again after 20 ms; a malformed event SHALL be skipped; a read or clear that throws ends
+event reading.
 
 #### Scenario: Device holds its answer until its event is read
 - **WHEN** events are being read and the device queues an ObjectAdded event after SendObjectInfo, answering only once that event has been read
@@ -133,13 +135,25 @@ a short wait before the next read; a malformed event SHALL be skipped.
 
 #### Scenario: Stalled interrupt endpoint
 - **WHEN** the interrupt endpoint answers with a stall
-- **THEN** the endpoint is cleared once and reading goes on after a pause, without a burst of reads
+- **THEN** the endpoint is cleared once, and within the next 50 ms at most two interrupt reads are made
 
 ### Requirement: The transport is released on every exit
 Closing the transport SHALL release the interface and close the device, and never throw, even when
 the device is already gone. Aborting it SHALL close the device without releasing the interface
 first, since a release could wait on a stuck transfer.
 
+#### Scenario: Abort
+- **WHEN** a set-up transport is aborted
+- **THEN** the device is closed and the interface is not released
+
 #### Scenario: Close twice
 - **WHEN** a set-up transport is closed, then closed again
 - **THEN** the interface is released and the device closed, and the second close resolves without error
+
+### Requirement: Device identifiers reach only the caller
+The library SHALL write nothing to the console or any log of its own, so serial numbers and other
+identifiers in USB descriptors and DeviceInfo reach only the caller, who decides what to show.
+
+#### Scenario: No console output
+- **WHEN** a device whose serial number is `SN-EXAMPLE` is found, set up, read and written, with events read, and closed
+- **THEN** nothing was written to the console

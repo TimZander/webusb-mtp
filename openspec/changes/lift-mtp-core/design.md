@@ -19,8 +19,16 @@ for npm; CI.
   `mtp-session` (MTP operations), matching the modules, so a requirement lives where its code is.
   The WebUSB check goes in `mtp-transport`, the only layer that touches WebUSB.
 - **The code moves unchanged** except: `@/` aliases become relative imports; comments lose the
-  app's issue numbers and hardware-round notes; the two diagnostic notes that said "the watch"
-  say "the device". Behaviour is the same.
+  app's issue numbers and hardware-round notes; the three diagnostic notes that said "the watch"
+  (an early answer, the cancel asked, the cancel failed) say "the device". Behaviour is the same,
+  with one exception below.
+- **One fix: an over-long MTP string throws.** The app's writer masked the u8 count, so a string
+  of 255 or more UTF-16 units produced a corrupt dataset. Specifying that would bless a bug; the
+  writer now throws, naming the 254-character limit.
+- **The public API is everything the four modules export, plus `webUsbAvailable()`,** re-exported
+  from `src/index.ts`: the code tables, encoders and decoders, `DataReader`/`DataWriter`,
+  `findMtpInterface`, `MtpTransport`, `UsbSetupError`, `describeError`, `MtpSession`, its error
+  classes, `ROOT_PARENT` and the timeout constants, and their types. Nothing is added or hidden.
 - **The app's `webusb.ts` is split.** Only `webUsbAvailable()` is generic. Garmin's vendor id
   (not used by the core), the app's build-input hash and its byte formatter stay behind.
 - **The fake USB device comes along as a test helper** (`test/fakeMtpDevice.ts`). It is generic

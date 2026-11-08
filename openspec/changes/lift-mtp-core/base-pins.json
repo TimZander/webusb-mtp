@@ -11,6 +11,8 @@
     },
     "mtp-session": {
       "The session offers MTP's file operations": null,
+      "Transaction ids follow MTP's numbering": null,
+      "A read answered without data is reported": null,
       "Every answered operation is reported": null,
       "A refused operation leaves the session usable": null,
       "A broken pipe stops the session": null,
@@ -18,8 +20,7 @@
       "Operations time out": null,
       "A write answered before its data is refused": null,
       "A write without an answer is diagnosed": null,
-      "Data phases are reported": null,
-      "Device identifiers reach only the caller": null
+      "Data phases are reported": null
     },
     "mtp-transport": {
       "WebUSB availability can be checked": null,
@@ -30,7 +31,8 @@
       "Multi-transfer responses are read completely": null,
       "A data phase's header goes in its own USB packet": null,
       "Events are read": null,
-      "The transport is released on every exit": null
+      "The transport is released on every exit": null,
+      "Device identifiers reach only the caller": null
     }
   }
 }

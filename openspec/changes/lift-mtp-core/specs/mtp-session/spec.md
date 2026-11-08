@@ -6,10 +6,10 @@ per-operation timeouts and what happens to the connection after each kind of fai
 ## ADDED Requirements
 
 ### Requirement: The session offers MTP's file operations
-The session SHALL offer GetDeviceInfo (outside a session, transaction id `0`), OpenSession,
-CloseSession, GetStorageIDs, GetStorageInfo, GetObjectHandles (of a folder, or the storage root by
-default), GetObjectInfo, GetPartialObject, SendObjectInfo, SendObject and DeleteObject, each
-returning its decoded data, and SHALL track whether a session is open.
+The session SHALL offer GetDeviceInfo, OpenSession, CloseSession, GetStorageIDs, GetStorageInfo,
+GetObjectHandles (of a folder, or the storage root by default), GetObjectInfo, GetPartialObject,
+SendObjectInfo, SendObject and DeleteObject, each returning its decoded data, and SHALL track
+whether a session is open.
 
 #### Scenario: Reading a device
 - **WHEN** a device with folder `DATA` holding file `a.bin` is read with each read operation in turn
@@ -18,6 +18,23 @@ returning its decoded data, and SHALL track whether a session is open.
 #### Scenario: Sending and deleting
 - **WHEN** SendObjectInfo announces a 200,000-byte file in a folder and SendObject sends it, with progress
 - **THEN** SendObjectInfo returns the new object's storage, parent and handle, progress ends at the whole container, the device holds the bytes, and DeleteObject removes the object
+
+### Requirement: Transaction ids follow MTP's numbering
+GetDeviceInfo and OpenSession SHALL use transaction id `0`. Every other operation SHALL use the
+next id of a counter that starts at `1` and that a successful OpenSession resets to `1`.
+
+#### Scenario: Ids after opening
+- **WHEN** GetDeviceInfo, OpenSession, GetStorageIDs and GetStorageInfo are sent in turn
+- **THEN** their transaction ids are `0`, `0`, `1` and `2`
+
+### Requirement: A read answered without data is reported
+When an operation that returns data is answered OK with no data phase, the session SHALL throw an
+error saying the operation returned no data, and stay usable; GetPartialObject SHALL return empty
+bytes instead.
+
+#### Scenario: No data phase
+- **WHEN** GetStorageIDs is answered OK with no data phase
+- **THEN** an error saying GetStorageIDs returned no data is thrown, and the session isn't broken
 
 ### Requirement: Every answered operation is reported
 After every operation the device answers, OK or not, the session SHALL report to an optional
@@ -38,8 +55,9 @@ for further operations.
 - **THEN** a response error for `GetStorageIDs (0x1004)` and `GeneralError (0x2002)` is thrown, the session isn't broken, and CloseSession can still be sent
 
 ### Requirement: A broken pipe stops the session
-When a transfer throws or an operation times out, the session SHALL mark itself broken, close the
-device and refuse every later operation without sending it.
+When an operation fails with anything but a response error (a transfer throws, an operation
+times out, or the device sends a container that isn't the expected response), the session SHALL
+mark itself broken, close the device and refuse every later operation without sending it.
 
 #### Scenario: Transfer throws
 - **WHEN** a transfer throws during GetStorageInfo
@@ -57,8 +75,9 @@ OpenSession again, which restarts transaction ids.
 ### Requirement: Operations time out
 Each operation SHALL be answered within a time limit, 10 seconds unless the caller sets another.
 The answer to SendObjectInfo, and to SendObject once its data is written, SHALL have a longer
-limit, 60 seconds unless set. A data phase SHALL time out only when it makes no progress within
-the operation's limit. A timeout SHALL throw a timeout error naming the operation.
+limit, 60 seconds unless set. While a write's data phase is being sent, the operation's limit
+SHALL count from the last chunk accepted, so a large write times out only when it stalls. A
+timeout SHALL throw a timeout error naming the operation.
 
 #### Scenario: Device stops answering
 - **WHEN** the device gives no answer to GetObjectInfo within the limit
@@ -77,23 +96,23 @@ the operation's limit. A timeout SHALL throw a timeout error naming the operatio
 - **THEN** a timeout error for SendObject is thrown after the operation limit, and the device is closed
 
 ### Requirement: A write answered before its data is refused
-When the device answers a write before accepting its data phase, the session SHALL note that
-answer's code, mark itself broken, close the device and throw a response error marked early,
-even when the answer was OK.
+When the device's answer to a write arrives and the data phase's write hasn't completed within
+1 second after it, the session SHALL note that answer's code, mark itself broken, close the
+device and throw a response error marked early, even when the answer was OK.
 
 #### Scenario: Answer before the data
 - **WHEN** the device answers SendObjectInfo with `0x2005` before taking its ObjectInfo
 - **THEN** a note says the device answered before accepting the data, a response error with `0x2005` is thrown, the data is never reported as written, and the device is closed
 
 #### Scenario: Answer right after the data
-- **WHEN** the device answers OK just as the last data packet's write completes
+- **WHEN** the device's OK answer arrives before the last data packet's write completes, and the write completes within 1 second after it
 - **THEN** the write succeeds and isn't treated as early
 
 ### Requirement: A write without an answer is diagnosed
-When a write's answer times out, the session SHALL, before closing, ask the device for its MTP
-status (class request `0x67`) and to cancel the transaction (class request `0x64` with code
-`0x4001` and the transaction id), each with a short limit, and note the outcomes. A read that
-times out SHALL send neither request.
+When SendObjectInfo or SendObject times out, whether its data stalled or its answer was late, the
+session SHALL, before closing, send the interface the class requests GetDeviceStatus (`0x67`) and
+Cancel (`0x64`, code `0x4001` and the transaction id), each with a 2-second limit, and note the
+outcomes. Other operations' timeouts SHALL send neither.
 
 #### Scenario: Write gets no answer
 - **WHEN** SendObjectInfo gets no answer within the write limit and the device reports DeviceBusy
@@ -102,6 +121,10 @@ times out SHALL send neither request.
 #### Scenario: Status can't be read
 - **WHEN** a write times out and the control requests fail
 - **THEN** a note says the status couldn't be read, and the device is still closed
+
+#### Scenario: A control request hangs
+- **WHEN** a write times out and the device never answers the status request
+- **THEN** after 2 seconds a note says the status couldn't be read, the cancel is still tried, and the device is closed
 
 #### Scenario: Read times out
 - **WHEN** GetStorageIDs times out
@@ -114,11 +137,3 @@ send, and another once the device has accepted all of it.
 #### Scenario: ObjectInfo accepted
 - **WHEN** SendObjectInfo succeeds
 - **THEN** both callbacks were called once with `0x100C` and the ObjectInfo bytes
-
-### Requirement: Device identifiers reach only the caller
-The library SHALL write nothing to the console or any log of its own, so serial numbers and other
-identifiers in USB descriptors and DeviceInfo reach only the caller, who decides what to show.
-
-#### Scenario: No console output
-- **WHEN** a full read and write run completes against a device whose serial number is `SN-EXAMPLE`
-- **THEN** nothing was written to the console

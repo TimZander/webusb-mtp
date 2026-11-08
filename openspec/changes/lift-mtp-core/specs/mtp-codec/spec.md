@@ -41,8 +41,8 @@ states, SHALL be refused with an error.
 - **THEN** decoding throws an error saying the container is truncated
 
 ### Requirement: Codes have readable names
-The library SHALL name the operation, response and event codes it defines (for example
-`GetStorageIDs`, `GeneralError`, `ObjectAdded`), name any other code `Unknown operation`,
+The library SHALL name the codes in its exported `OperationCode`, `ResponseCode` and `EventCode`
+tables (for example `GetStorageIDs`, `GeneralError`, `ObjectAdded`), name any other code `Unknown operation`,
 `Unknown response` or `Unknown event`, and format a code as upper-case hex with at least four
 digits.
 
@@ -58,7 +58,7 @@ digits.
 The library SHALL read and write MTP dataset values little-endian: u8, u16, u32, u64 (as a
 number, exact up to 2^53), arrays (a u32 count, then the elements) and strings (a u8 count of
 UTF-16 code units including the NUL terminator, then the units; an empty string is one `0`
-byte). A read past the end of the data SHALL throw.
+byte). A read past the end SHALL throw; writing a string of over 254 units SHALL throw.
 
 #### Scenario: String round trip
 - **WHEN** the string `Größe` is written and read back
@@ -67,6 +67,10 @@ byte). A read past the end of the data SHALL throw.
 #### Scenario: Empty string
 - **WHEN** an empty string is written
 - **THEN** it is the single byte `0`, and reads back as an empty string
+
+#### Scenario: String too long
+- **WHEN** a string of 255 characters is written
+- **THEN** writing throws an error naming the 254-character limit
 
 #### Scenario: Large u64
 - **WHEN** a u64 of `5 * 2^32 + 7` is read

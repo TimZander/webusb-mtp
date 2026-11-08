@@ -4,7 +4,7 @@ A web app that writes files to a USB device (it began as a Garmin map app) carri
 working Media Transfer Protocol (MTP) stack over WebUSB. Nothing in that stack is tied to one
 vendor, and no maintained MTP-over-WebUSB library for the browser exists. Lifting it into its own
 MIT-licensed library lets other projects use it and lets vendor-specific code (Garmin's, first)
-build on it from a separate repository.
+build on it from a separate library (`garmin-mtp`).
 
 ## What Changes
 
@@ -40,4 +40,4 @@ None (the repository has no specs yet).
 - New code under `src/`, tests under `test/`, packaging, CI and README.
 - Out of scope: anything vendor-specific (Garmin's vendor and product ids, its "Garmin mode",
   its folders and file formats), user-facing hints per platform, logging. They stay with the
-  app or go to a later Garmin module.
+  app or go to a later Garmin module, `garmin-mtp`.

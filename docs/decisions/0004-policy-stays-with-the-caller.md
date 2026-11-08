@@ -22,7 +22,7 @@ platform, and keeping serial numbers out of logs. Should the library take that b
 
 Chosen option: "Specify only what the core does", because the change moves code as it is, and
 each of the four is a policy (when to retry, which vendor quirks, which words, what to redact)
-that depends on the app. Garmin mode is a Garmin fact for the Garmin module.
+that depends on the app. Garmin mode is a Garmin fact for `garmin-mtp`, the Garmin module.
 
 ### Consequences
 

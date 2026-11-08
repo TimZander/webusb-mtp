@@ -4,7 +4,7 @@ The code comes from a web app that builds Garmin maps and sends them to a watch 
 MTP stack is four modules (container framing, datasets, transport, session) and a WebUSB
 availability check. They have no Garmin logic: the app's own client (choosing the device, Garmin
 mode, the `GARMIN` folder, map headers, user hints and logging) sits on top of them. That client
-stays in the app; a Garmin module may follow in its own repository.
+stays in the app; a Garmin module, `garmin-mtp`, may follow in its own repository.
 
 ## Goals / Non-Goals
 
@@ -83,7 +83,7 @@ code uses them), and every requirement about the app's dialogs, logs, folders an
    `0x201E`. *Assumption:* no; the session reports the error and stays usable, and the caller
    retries (as the app does), so the library adds no policy.
 2. **Should "Garmin mode" (vendor `0x091E`, product `0x0003`) be detected here?** *Assumption:* no;
-   it is a Garmin fact and belongs in the Garmin module.
+   it is a Garmin fact and belongs in `garmin-mtp`.
 3. **Should timeouts, read size and write chunk size be options?** Timeouts and read size already
    are; the 64 KiB write chunk is a constant. *Assumption:* leave it as is until someone needs it.
 4. **Package name on npm.** *Assumption:* `webusb-mtp`, unscoped, matching the repository; checked

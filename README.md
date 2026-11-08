@@ -90,7 +90,7 @@ Generic MTP only: container and dataset encoding, the WebUSB transport, and the 
 file manager needs (GetDeviceInfo, OpenSession, CloseSession, GetStorageIDs, GetStorageInfo,
 GetObjectHandles, GetObjectInfo, GetPartialObject, SendObjectInfo, SendObject, DeleteObject).
 Helpers for Garmin devices (their USB ids, their "Garmin mode", their folders and file formats) will
-live in a separate repository built on this one.
+live in a separate library, `garmin-mtp`, built on this one.
 
 ## Development
 

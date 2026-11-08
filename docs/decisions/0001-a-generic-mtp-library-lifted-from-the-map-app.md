@@ -22,7 +22,7 @@ become a library of its own, and how much of it?
 
 Chosen option: "Lift only the generic core", the owner's decision. The library is public, MIT,
 named `webusb-mtp`. The app's Garmin client (Garmin mode, the `GARMIN` folder, map headers, user
-hints, logging) stays behind and may become its own repository on top of this one. The app keeps
+hints, logging) stays behind and may become its own library, `garmin-mtp`, on top of this one. The app keeps
 its own copy until a later change switches it over.
 
 ### Consequences

@@ -1,9 +1,10 @@
 // Spec: mtp-session › every requirement (operations, transaction ids, reports, refused and
 // broken operations, stale sessions, timeouts, early answers, write diagnostics).
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { MtpResponseError, MtpSession, MtpTimeoutError, OPERATION_TIMEOUT_MS, WRITE_ANSWER_TIMEOUT_MS } from '../src/session.js'
 import { MtpTransport, findMtpInterface } from '../src/transport.js'
 import { createFakeMtpDevice, type FakeDeviceOptions } from './fakeMtpDevice.js'
+import { encodeObjectInfo } from '../src/dataset.js'
 
 async function connect(options: FakeDeviceOptions = {}, timeoutMs?: number) {
   const fake = createFakeMtpDevice(options)
@@ -228,23 +229,28 @@ describe('MtpSession write diagnostics', () => {
     const notes: string[] = []
     const dataOut: [number, number][] = []
     const written: [number, number][] = []
+    const payloads: Uint8Array[] = []
     const session = new MtpSession(transport, {
       timeoutMs: 20,
       writeTimeoutMs: 40,
       onNote: (t) => notes.push(t),
-      onDataOut: (code, bytes) => dataOut.push([code, bytes.length]),
+      onDataOut: (code, bytes) => {
+        dataOut.push([code, bytes.length])
+        payloads.push(bytes)
+      },
       onDataWritten: (code, bytes) => written.push([code, bytes.length]),
     })
     await session.openSession()
-    return { fake, session, notes, dataOut, written }
+    return { fake, session, notes, dataOut, written, payloads }
   }
 
   it('reports the file info before and after the device accepts it', async () => {
-    const { session, dataOut, written } = await writer({})
+    const { session, dataOut, written, payloads } = await writer({})
     await session.sendObjectInfo(STORAGE, 1, info)
     expect(dataOut).toHaveLength(1)
     expect(dataOut[0][0]).toBe(0x100c)
     expect(written).toEqual(dataOut)
+    expect(Array.from(payloads[0])).toEqual(Array.from(encodeObjectInfo(info)))
   })
 
   it('catches an answer that comes before the data is accepted, and closes the device', async () => {
@@ -252,6 +258,7 @@ describe('MtpSession write diagnostics', () => {
     const err = await session.sendObjectInfo(STORAGE, 1, info).catch((e) => e)
     expect(err).toBeInstanceOf(MtpResponseError)
     expect(err.responseCode).toBe(0x2005)
+    expect(err.early).toBe(true)
     expect(notes.join('\n')).toMatch(/answered before accepting/)
     expect(written).toEqual([])
     expect(session.broken).toBe(true)
@@ -266,6 +273,8 @@ describe('MtpSession write diagnostics', () => {
     const cancel = fake.controlRequests[1].data
     expect(cancel.slice(0, 2)).toEqual([0x01, 0x40])
     expect(cancel).toHaveLength(6)
+    // SendObjectInfo is the first transaction after OpenSession: id 1.
+    expect(cancel.slice(2)).toEqual([1, 0, 0, 0])
     expect(notes.join('\n')).toMatch(/MTP status: DeviceBusy \(0x2019\)/)
     expect(notes.join('\n')).toMatch(/cancel/i)
     expect(fake.opened).toBe(false)
@@ -304,23 +313,93 @@ function stubTransport(overrides: Partial<Record<keyof MtpTransport, unknown>>) 
 }
 
 describe('spec scenarios (mtp-session)', () => {
-  it('numbers transactions 0, 0, 1, 2 for GetDeviceInfo, OpenSession and the next two operations', async () => {
+  async function recordingIds() {
     const fake = createFakeMtpDevice({ objects })
     const tids: number[] = []
     const out = fake.device.transferOut.bind(fake.device)
     fake.device.transferOut = async (ep: number, data: BufferSource) => {
-      const bytes = new Uint8Array(data as ArrayBuffer)
+      const bytes = data as Uint8Array
       if (bytes.length >= 12 && bytes[4] === 1) tids.push(new DataView(bytes.buffer, bytes.byteOffset).getUint32(8, true))
       return out(ep, data)
     }
     const transport = new MtpTransport(fake.device, findMtpInterface(fake.device)!)
     await transport.setup()
-    const session = new MtpSession(transport)
+    return { session: new MtpSession(transport), tids }
+  }
+
+  it('numbers transactions 0, 0, 1, 2 for GetDeviceInfo, OpenSession and the next two operations', async () => {
+    const { session, tids } = await recordingIds()
     await session.getDeviceInfo()
     await session.openSession()
     await session.getStorageIds()
     await session.getStorageInfo(STORAGE)
     expect(tids).toEqual([0, 0, 1, 2])
+  })
+
+  it('restarts transaction ids after reopening', async () => {
+    const { session, tids } = await recordingIds()
+    await session.openSession()
+    await session.getStorageIds()
+    await session.closeSession()
+    await session.openSession()
+    await session.getStorageIds()
+    expect(tids.slice(1)).toEqual([1, 2, 0, 1])
+  })
+
+  it('marks an early OK answer to a write as early, and closes the device', async () => {
+    const { fake, session } = await connect({
+      objects: [{ handle: 1, storageId: STORAGE, parent: 0xffffffff, name: 'DATA', folder: true }],
+      answerBeforeData: (op) => (op === 0x100c ? 0x2001 : undefined),
+    }, 20)
+    await session.openSession()
+    const info = { storageId: STORAGE, objectFormat: 0x3000, objectCompressedSize: 3, parentObject: 1, associationType: 0, filename: 'a.bin' }
+    const err = await session.sendObjectInfo(STORAGE, 1, info).catch((e) => e)
+    expect(err).toBeInstanceOf(MtpResponseError)
+    expect([err.responseCode, err.early]).toEqual([0x2001, true])
+    expect(fake.opened).toBe(false)
+  })
+
+  it('still breaks the session and closes when the note callback throws after a write timeout', async () => {
+    const { transport, calls } = stubTransport({ readContainer: () => new Promise(() => {}) })
+    const session = new MtpSession(transport, {
+      writeTimeoutMs: 20,
+      onNote: () => {
+        throw new Error('note failed')
+      },
+    })
+    const info = { storageId: 1, objectFormat: 0x3000, objectCompressedSize: 3, parentObject: 2, associationType: 0, filename: 'a.bin' }
+    await expect(session.sendObjectInfo(1, 2, info)).rejects.toBeInstanceOf(MtpTimeoutError)
+    expect(session.broken).toBe(true)
+    expect(calls).toContain('abort')
+  })
+
+  it('uses a 10 second operation limit and a 60 second write limit by default', async () => {
+    vi.useFakeTimers()
+    try {
+      const { transport } = stubTransport({ readContainer: () => new Promise(() => {}) })
+      const read = new MtpSession(transport).getDeviceInfo().catch((e) => e)
+      await vi.advanceTimersByTimeAsync(9_999)
+      let settled = false
+      void read.then(() => (settled = true))
+      await vi.advanceTimersByTimeAsync(0)
+      expect(settled).toBe(false)
+      await vi.advanceTimersByTimeAsync(1)
+      expect(await read).toBeInstanceOf(MtpTimeoutError)
+
+      const { transport: t2 } = stubTransport({ readContainer: () => new Promise(() => {}) })
+      const info = { storageId: 1, objectFormat: 0x3000, objectCompressedSize: 3, parentObject: 2, associationType: 0, filename: 'a.bin' }
+      const write = new MtpSession(t2).sendObjectInfo(1, 2, info).catch((e) => e)
+      let writeSettled = false
+      void write.then(() => (writeSettled = true))
+      await vi.advanceTimersByTimeAsync(59_999)
+      expect(writeSettled).toBe(false)
+      await vi.advanceTimersByTimeAsync(10_000)
+      const err = await write
+      expect(err).toBeInstanceOf(MtpTimeoutError)
+      expect(err.timeoutMs).toBe(60_000)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('reports a read answered OK with no data, and stays usable', async () => {

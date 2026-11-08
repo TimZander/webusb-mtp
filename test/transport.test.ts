@@ -2,9 +2,9 @@
 // order", "Setup failures name their step", "Setup calls time out", "Multi-transfer responses are
 // read completely", "A data phase's header goes in its own USB packet", "Events are read",
 // "The transport is released on every exit".
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { MtpTransport, UsbSetupError, findMtpInterface } from '../src/transport.js'
-import { ContainerType } from '../src/container.js'
+import { ContainerType, encodeContainer } from '../src/container.js'
 import { MtpSession } from '../src/session.js'
 import {
   BULK_IN,
@@ -117,6 +117,7 @@ describe('MtpTransport.setup', () => {
     const err = await new MtpTransport(fake.device, findMtpInterface(fake.device)!).setup().catch((e) => e)
     expect(err).toBeInstanceOf(UsbSetupError)
     expect(err.step).toBe('claimInterface')
+    expect(err.timedOut).toBe(false)
     expect(err.message).toMatch(/Unable to claim interface/)
   })
 })
@@ -283,6 +284,51 @@ describe('spec scenarios (mtp-transport)', () => {
       filename: 'a.bin',
     })
     expect(events).toContainEqual({ code: 0x4002, params: [sent.handle] })
+    await t.close()
+  })
+
+  it('times out a setup call after 10 seconds by default', async () => {
+    vi.useFakeTimers()
+    try {
+      const fake = createFakeMtpDevice({ setupHang: { open: true } })
+      const setup = new MtpTransport(fake.device, findMtpInterface(fake.device)!).setup().catch((e) => e)
+      let settled = false
+      void setup.then(() => (settled = true))
+      await vi.advanceTimersByTimeAsync(9_999)
+      expect(settled).toBe(false)
+      await vi.advanceTimersByTimeAsync(1)
+      const err = await setup
+      expect(err).toBeInstanceOf(UsbSetupError)
+      expect([err.step, err.timedOut]).toEqual(['open', true])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('throws on a header that states fewer than 12 bytes', async () => {
+    const { fake, t } = await openTransport({})
+    fake.device.transferIn = async () => {
+      const bytes = new Uint8Array(12)
+      new DataView(bytes.buffer).setUint32(0, 8, true)
+      return { status: 'ok', data: new DataView(bytes.buffer) } as USBInTransferResult
+    }
+    await expect(t.readContainer()).rejects.toThrow(/impossible length/)
+  })
+
+  it('skips an interrupt read with another status and passes on the next event', async () => {
+    const { fake, t } = await openTransport({})
+    const event = encodeContainer({ type: ContainerType.Event, code: 0x4002, transactionId: 0, params: [9] })
+    const answers: USBInTransferResult[] = [
+      { status: 'babble' } as USBInTransferResult,
+      { status: 'ok', data: new DataView(new Uint8Array(4).buffer) } as USBInTransferResult,
+      { status: 'ok', data: new DataView(event.buffer) } as USBInTransferResult,
+    ]
+    fake.device.transferIn = (ep: number) =>
+      ep === INTERRUPT_IN && answers.length > 0 ? Promise.resolve(answers.shift()!) : new Promise(() => {})
+    const seen: [number, number[]][] = []
+    t.startEvents((ev) => seen.push([ev.code, ev.params]))
+    await new Promise((r) => setTimeout(r, 10))
+    expect(seen).toEqual([[0x4002, [9]]])
     await t.close()
   })
 })

@@ -11,8 +11,9 @@ build on it from a separate repository.
 - Add the library's code, lifted as it is from that app: container framing, dataset encoding,
   the WebUSB transport and the MTP session, plus a WebUSB availability check. Path aliases
   become relative imports; comments lose the app's issue numbers and test-round notes; wording
-  in comments and diagnostic notes goes from "watch" to "device". One fix: writing a string too
-  long for MTP's u8 count throws instead of producing a corrupt dataset.
+  in comments and diagnostic notes goes from "watch" to "device". Two fixes: writing a string too
+  long for MTP's u8 count throws instead of producing a corrupt dataset, and a throwing note
+  callback after a write timeout no longer leaves the device open.
 - Add their tests, and the scripted fake USB device they run against, as a test helper.
 - Add tests for scenarios the app covered only through its own code (a stale session, events
   unblocking a write, the availability check).

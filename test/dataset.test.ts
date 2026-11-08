@@ -58,13 +58,13 @@ function deviceInfoBytes(): Uint8Array {
   const w = new DataWriter()
   w.u16(100) // StandardVersion
   w.u32(6) // VendorExtensionID
-  w.u16(100) // VendorExtensionVersion
+  w.u16(110) // VendorExtensionVersion
   w.string('microsoft.com: 1.0;')
-  w.u16(0) // FunctionalMode
+  w.u16(2) // FunctionalMode
   w.u16Array([0x1001, 0x1002, 0x101b])
   w.u16Array([0x4002])
-  w.u16Array([])
-  w.u16Array([])
+  w.u16Array([0xd402])
+  w.u16Array([0x3801])
   w.u16Array([0x3000, 0x3001])
   w.string('Example Corp')
   w.string('Model X')
@@ -75,16 +75,22 @@ function deviceInfoBytes(): Uint8Array {
 
 describe('decodeDeviceInfo', () => {
   it('reads every DeviceInfo field', () => {
-    const info = decodeDeviceInfo(deviceInfoBytes())
-    expect(info.standardVersion).toBe(100)
-    expect(info.vendorExtensionDesc).toBe('microsoft.com: 1.0;')
-    expect(info.operationsSupported).toEqual([0x1001, 0x1002, 0x101b])
-    expect(info.eventsSupported).toEqual([0x4002])
-    expect(info.playbackFormats).toEqual([0x3000, 0x3001])
-    expect(info.manufacturer).toBe('Example Corp')
-    expect(info.model).toBe('Model X')
-    expect(info.deviceVersion).toBe('15.08')
-    expect(info.serialNumber).toBe('ABC123')
+    expect(decodeDeviceInfo(deviceInfoBytes())).toEqual({
+      standardVersion: 100,
+      vendorExtensionId: 6,
+      vendorExtensionVersion: 110,
+      vendorExtensionDesc: 'microsoft.com: 1.0;',
+      functionalMode: 2,
+      operationsSupported: [0x1001, 0x1002, 0x101b],
+      eventsSupported: [0x4002],
+      devicePropertiesSupported: [0xd402],
+      captureFormats: [0x3801],
+      playbackFormats: [0x3000, 0x3001],
+      manufacturer: 'Example Corp',
+      model: 'Model X',
+      deviceVersion: '15.08',
+      serialNumber: 'ABC123',
+    })
   })
 })
 

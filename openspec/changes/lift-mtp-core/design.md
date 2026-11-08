@@ -21,10 +21,14 @@ for npm; CI.
 - **The code moves unchanged** except: `@/` aliases become relative imports; comments lose the
   app's issue numbers and hardware-round notes; the three diagnostic notes that said "the watch"
   (an early answer, the cancel asked, the cancel failed) say "the device". Behaviour is the same,
-  with one exception below.
+  with two exceptions below.
 - **One fix: an over-long MTP string throws.** The app's writer masked the u8 count, so a string
   of 255 or more UTF-16 units produced a corrupt dataset. Specifying that would bless a bug; the
   writer now throws, naming the 254-character limit.
+- **Second fix, found by the conformance review: a throwing note callback can't leave a stuck pipe
+  open.** After a write timed out, a throw from the caller's `onNote` escaped before the session
+  marked itself broken and closed the device, so later operations went onto a pipe with a transfer
+  still pending. Notes during that diagnosis now swallow callback errors, and the timeout is thrown.
 - **The public API is everything the four modules export, plus `webUsbAvailable()`,** re-exported
   from `src/index.ts`: the code tables, encoders and decoders, `DataReader`/`DataWriter`,
   `findMtpInterface`, `MtpTransport`, `UsbSetupError`, `describeError`, `MtpSession`, its error

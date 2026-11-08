@@ -1,6 +1,5 @@
 // MTP operations over a claimed transport: transaction ids, data phases, response codes
-// and per-operation timeouts. Lifted from a web app that sends Garmin maps to a watch;
-// nothing here is vendor-specific.
+// and per-operation timeouts.
 //
 // Two kinds of failure, handled differently by callers:
 // - MtpResponseError: the device answered with a non-OK code. The pipe is fine, so later
@@ -234,7 +233,14 @@ export class MtpSession {
   // device isn't left mid-operation (one left that way stayed stuck for the next connection).
   // Control requests, each with a short time limit; failures are noted, never thrown.
   private async diagnoseStuckWrite(tid: number): Promise<void> {
-    const note = (t: string) => this.options.onNote?.(t)
+    // A throwing note callback must not stop the caller from closing the stuck pipe.
+    const note = (t: string) => {
+      try {
+        this.options.onNote?.(t)
+      } catch {
+        // Ignored: the timeout is what gets reported.
+      }
+    }
     const limit = <T>(p: Promise<T>) =>
       Promise.race([p, new Promise<never>((_, reject) => setTimeout(() => reject(new Error('no answer')), 2_000))])
     try {

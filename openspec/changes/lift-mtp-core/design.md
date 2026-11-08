@@ -54,7 +54,7 @@ Each lifted requirement, and the app requirement it came from (by title):
 | mtp-transport: Setup failures name their step | watch-usb-probe: "Claim failures explain likely causes" (the error; hints stay with the app) |
 | mtp-transport: Setup calls time out | watch-usb-probe: "Operations time out"; watch-transfer: "Steps time out" |
 | mtp-transport: Multi-transfer responses are read completely | watch-usb-probe: "Multi-transfer responses are read completely" |
-| mtp-transport: Events are read | watch-transfer: "The watch's events are read" |
+| mtp-transport: Events are read; Event reading outlasts bad reads | watch-transfer: "The watch's events are read" |
 | mtp-session: Operations time out | watch-usb-probe: "Operations time out"; watch-transfer: "Steps time out" |
 | mtp-session: A write answered before its data is refused | watch-transfer: "Steps time out" (scenario "Watch answers before taking the data") |
 | mtp-session: A write without an answer is diagnosed | watch-transfer: "Steps time out" (scenario "A write gets no answer") |

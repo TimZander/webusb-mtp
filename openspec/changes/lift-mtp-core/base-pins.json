@@ -31,6 +31,7 @@
       "Multi-transfer responses are read completely": null,
       "A data phase's header goes in its own USB packet": null,
       "Events are read": null,
+      "Event reading outlasts bad reads": null,
       "The transport is released on every exit": null,
       "Device identifiers reach only the caller": null
     }

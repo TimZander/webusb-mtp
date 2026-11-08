@@ -125,9 +125,7 @@ lose a payload that shares the header's packet.
 ### Requirement: Events are read
 Once started, the transport SHALL keep reading the interrupt endpoint and pass each decodable
 event container to the caller until the transport is closed, so a device that waits for its
-events to be read before answering isn't left waiting. A stalled endpoint SHALL be cleared and
-read again after 20 ms; a read with another status that isn't OK, or shorter than a header, and
-a malformed event SHALL be skipped; a read or clear that throws ends event reading.
+events to be read before answering isn't left waiting.
 
 #### Scenario: Device holds its answer until its event is read
 - **WHEN** events are being read and the device queues an ObjectAdded event after SendObjectInfo, answering only once that event has been read
@@ -137,9 +135,23 @@ a malformed event SHALL be skipped; a read or clear that throws ends event readi
 - **WHEN** event reading is started and the transport is then closed
 - **THEN** a read was pending while open, and none is pending after closing
 
+### Requirement: Event reading outlasts bad reads
+While reading events, a stalled interrupt endpoint SHALL be cleared and read again after 20 ms. A
+read with another status that isn't OK, one shorter than a header, a malformed event, and a throw
+from the caller's event callback SHALL be skipped. A read or clear that throws SHALL end event
+reading.
+
 #### Scenario: Stalled interrupt endpoint
 - **WHEN** the interrupt endpoint answers with a stall
 - **THEN** the endpoint is cleared once, and within the next 50 ms at most two interrupt reads are made
+
+#### Scenario: Bad read skipped
+- **WHEN** one interrupt read ends with status `babble` and the next is four bytes long, then an ObjectAdded event arrives
+- **THEN** the caller receives only the ObjectAdded event
+
+#### Scenario: Event callback throws
+- **WHEN** the caller's event callback throws for one event
+- **THEN** the next event is still passed on
 
 ### Requirement: The transport is released on every exit
 Closing the transport SHALL release the interface and close the device, and never throw, even when

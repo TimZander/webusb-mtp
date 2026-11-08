@@ -21,4 +21,4 @@
 
 - [x] 4.1 Conformance review
 - [x] 4.2 ADRs and lessons
-- [ ] 4.3 Scan the diff for private material from the source app
+- [x] 4.3 Scan the diff for private material from the source app

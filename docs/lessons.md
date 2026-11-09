@@ -2,6 +2,16 @@
 
 What surprised us or went wrong, and what to do differently. Newest first.
 
+## 2026-11-09 — npm showed `0.0.0-stage` before the real version (first release)
+
+The release run published `webusb-mtp@0.1.0` (the log said `+ webusb-mtp@0.1.0`, with provenance),
+yet for a minute or two `npm view webusb-mtp` returned `0.0.0-stage` as `latest`. npm had said "Your
+package is being processed and may take a few minutes to become available", and the placeholder
+stays in the package's `time` history. 0.1.0 then appeared as `latest`, with the integrity value
+from the publish log. **Do instead:** after a publish, don't read the first `npm view` as the
+result: poll with `--prefer-online` until the version from the publish log is `latest`, and check
+its `dist.integrity` against the log before building anything on it.
+
 ## 2026-11-08 — A pipe into `tail` hid a failed check (lift-mtp-core)
 
 `bash scripts/sdd/check-specs.sh --worktree | tail -1 && git commit …` committed a spec that failed

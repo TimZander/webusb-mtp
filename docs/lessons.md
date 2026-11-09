@@ -2,6 +2,15 @@
 
 What surprised us or went wrong, and what to do differently. Newest first.
 
+## 2026-11-09 — A trusted publisher allowed to stage refused a direct publish (0.1.1)
+
+The first release without a token failed with `403 … OIDC permission denied for this action`,
+although the trusted publisher's repository, workflow and environment all matched. Its permission
+was "npm stage publish", and the workflow publishes directly. **Do instead:** when setting up a
+trusted publisher, check its permission matches how the workflow publishes. Re-running only the
+failed publish job afterwards reuses the check job's build. A new trusted publisher must publish
+once within about two days to be validated.
+
 ## 2026-11-09 — npm showed `0.0.0-stage` before the real version (first release)
 
 The release run published `webusb-mtp@0.1.0` (the log said `+ webusb-mtp@0.1.0`, with provenance),

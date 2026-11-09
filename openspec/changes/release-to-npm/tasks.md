@@ -12,9 +12,9 @@
 
 ## 3. Review and records
 
-- [ ] 3.1 Conformance review (round 1: R1 two jobs, M1 failure handling, M2 secret expressions, R2 exact npm, S1 one at a time, R3 lock churn)
-- [ ] 3.2 `/security-review` of the diff and an attack test (the workflow handles a secret)
-- [ ] 3.3 ADRs and lessons
+- [x] 3.1 Conformance review, 2 rounds (round 1: R1 two jobs, M1 failure handling, M2 secret expressions, R2 exact npm, S1 one at a time, R3 lock churn; round 2: 4 soft gaps fixed)
+- [x] 3.2 `/security-review` of the diff and an attack test (the workflow handles a secret)
+- [x] 3.3 ADRs and lessons
 
 ## 4. Owner, after merge
 

@@ -93,8 +93,8 @@ describe('release workflow', () => {
     const npm = publishJob.steps.find((s) => /^npm install -g npm@/.test(s.run ?? ''))
     const version = npm?.run?.match(/^npm install -g npm@(\d+)\.(\d+)\.(\d+)$/)
     expect(version).not.toBeNull()
-    const [major, minor] = [Number(version![1]), Number(version![2])]
-    expect(major > 11 || (major === 11 && minor >= 5)).toBe(true)
+    const [major, minor, patch] = version!.slice(1).map(Number)
+    expect(major * 1e6 + minor * 1e3 + patch).toBeGreaterThanOrEqual(11 * 1e6 + 5 * 1e3 + 1)
     expect(publishJob.steps.indexOf(npm!)).toBeLessThan(publishJob.steps.indexOf(publish!))
     const node = publishJob.steps.find((s) => s.uses?.startsWith('actions/setup-node@'))
     expect(node?.with).toMatchObject({ 'node-version': 22, 'registry-url': 'https://registry.npmjs.org' })
@@ -109,7 +109,10 @@ describe('release workflow', () => {
   })
 
   it('runs no project code in the publish job', () => {
-    for (const s of publishJob.steps) expect(s.run ?? '').not.toMatch(/\bnpm (ci|test|run|install(?! -g npm@))\b|\bnpx\b|\bnode\b/)
+    const commands = publishJob.steps.map((s) => s.run?.trim()).filter(Boolean)
+    expect(commands).toHaveLength(2)
+    expect(commands[0]).toMatch(/^npm install -g npm@\d+\.\d+\.\d+$/)
+    expect(commands[1]).toBe('npm publish --access public --provenance --ignore-scripts')
   })
 
   it('pins every action to a full commit SHA', () => {

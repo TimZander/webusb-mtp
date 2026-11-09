@@ -107,7 +107,7 @@ specified in `openspec/specs/`, and changes go through spec-driven development (
 1. Bump `version` in `package.json` (and `package-lock.json`) in a pull request, and merge it.
 2. In the Actions tab, run the **release** workflow (`.github/workflows/release.yml`) on `main`.
    It installs, type-checks, tests and builds, then publishes that version to npm with
-   provenance. It runs only on `main`, and a version npm already has fails the run.
+   provenance. It publishes only from `main`, and a version npm already has fails the run.
 
 The first publish authenticates with a short-lived npm token in the `NPM_TOKEN` repository secret.
 After it, add this workflow as the package's trusted publisher on npmjs.com (GitHub Actions,

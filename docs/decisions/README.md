@@ -14,3 +14,7 @@ one. A superseded record stays, with its status set to `superseded by NNNN`.
 | [0006](0006-package-as-esm-with-declarations.md) | ES modules and declarations built by `tsc`; WebUSB types as a dependency; plain CI | accepted |
 | [0007](0007-lock-file-written-with-npm-11.md) | The lock file is written with npm 11 | accepted |
 | [0008](0008-how-the-change-was-run.md) | How `lift-mtp-core` was split, reviewed and stopped | accepted |
+| [0009](0009-release-from-github-by-hand.md) | Releases are started by hand from GitHub, on `main` | accepted |
+| [0010](0010-check-job-then-publish-job.md) | A check job without credentials, then a publish job that runs no project code | accepted |
+| [0011](0011-release-workflow-stays-in-this-repository.md) | The release workflow stays in this repository, not in ci-recipes, for now | proposed |
+| [0012](0012-how-release-to-npm-was-run.md) | How `release-to-npm` was reviewed | accepted |

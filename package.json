@@ -1,6 +1,6 @@
 {
   "name": "webusb-mtp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Media Transfer Protocol (MTP) over WebUSB for the browser, in TypeScript.",
   "license": "MIT",
   "author": "Tim Zander",

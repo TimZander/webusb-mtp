@@ -13,7 +13,7 @@
 ## 3. Review and records
 
 - [x] 3.1 Conformance review, 2 rounds (round 1: R1 two jobs, M1 failure handling, M2 secret expressions, R2 exact npm, S1 one at a time, R3 lock churn; round 2: 4 soft gaps fixed)
-- [x] 3.2 `/security-review` of the diff and an attack test (the workflow handles a secret): 14 edits, then 6 more after the approval gate, all caught
+- [x] 3.2 `/security-review` of the diff and an attack test (the workflow handles a secret): 14 edits, then 7 more after the approval gate; `format()` inside the lookup first got past the secret check, fixed, then all caught
 - [x] 3.3 ADRs and lessons
 
 ## 4. Owner, after merge

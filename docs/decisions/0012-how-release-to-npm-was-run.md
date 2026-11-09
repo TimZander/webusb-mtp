@@ -27,6 +27,9 @@ Chosen option: "a second round and an attack test", because round 1 changed the 
 - Security review: no finding at confidence 8 or more; R1 rated hardening.
 - Conformance review round 2: 4 soft gaps, fixed.
 - Attack test: 14 edits an attacker would make to the workflow, each failing the tests.
+- Code review of PR #4 (asked by the owner): an approval gate (ADR 0013) and three over-broad
+  tests. Its second attack round found `secrets[format('NPM_{0}', …)]` getting past the secret
+  check (the `{0}` ended the pattern early); fixed, then all 7 caught.
 
 ### Consequences
 

@@ -140,7 +140,7 @@ describe('release workflow', () => {
 
   it('gives NPM_TOKEN to the publish step alone, which runs no package scripts', () => {
     // Every ${{ }} expression that mentions secrets, however it spells the lookup.
-    const secretExpressions = raw.match(/\$\{\{[^}]*\bsecrets\b[^}]*\}\}/g) ?? []
+    const secretExpressions = (raw.match(/\$\{\{[\s\S]*?\}\}/g) ?? []).filter((e) => /\bsecrets\b/.test(e))
     expect(secretExpressions).toEqual(['${{ secrets.NPM_TOKEN }}'])
     expect(JSON.stringify(publish)).toContain('secrets.NPM_TOKEN')
     expect(workflow.env).toBeUndefined()

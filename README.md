@@ -24,8 +24,6 @@ your app can explain this to its users.
 npm install webusb-mtp
 ```
 
-(Not published yet: install from a local build or a git checkout until it is.)
-
 ## Usage
 
 ```ts
@@ -103,6 +101,18 @@ npm run build   # ES modules and type declarations in dist/
 
 Tests run in Node against a scripted fake USB device (`test/fakeMtpDevice.ts`). The behaviour is
 specified in `openspec/specs/`, and changes go through spec-driven development (see `CLAUDE.md`).
+
+## Releasing
+
+1. Bump `version` in `package.json` (and `package-lock.json`) in a pull request, and merge it.
+2. In the Actions tab, run the **release** workflow (`.github/workflows/release.yml`) on `main`.
+   It installs, type-checks, tests and builds, then publishes that version to npm with
+   provenance. It runs only on `main`, and a version npm already has fails the run.
+
+The first publish authenticates with a short-lived npm token in the `NPM_TOKEN` repository secret.
+After it, add this workflow as the package's trusted publisher on npmjs.com (GitHub Actions,
+repository `TimZander/webusb-mtp`, workflow `release.yml`), then delete the token and the secret:
+later releases use trusted publishing, with no stored credential.
 
 ## License
 

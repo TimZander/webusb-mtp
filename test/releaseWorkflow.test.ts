@@ -1,11 +1,12 @@
 // Spec: npm-release › every requirement. npm itself can't run here, so these read the workflow
 // file and the README and check what they say the release may do.
+/// <reference types="node" />
 import { readFileSync, existsSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { parse } from 'yaml'
 
-const workflowPath = resolve(__dirname, '../.github/workflows/release.yml')
+const workflowPath = fileURLToPath(new URL('../.github/workflows/release.yml', import.meta.url))
 const raw = existsSync(workflowPath) ? readFileSync(workflowPath, 'utf8') : ''
 
 interface Step {
@@ -109,7 +110,7 @@ describe('release workflow', () => {
 
 // "Releasing is documented"
 describe('README', () => {
-  const readme = readFileSync(resolve(__dirname, '../README.md'), 'utf8')
+  const readme = readFileSync(fileURLToPath(new URL('../README.md', import.meta.url)), 'utf8')
   const releasing = readme.split(/^## Releasing$/m)[1]?.split(/^## /m)[0] ?? ''
 
   it('installs from npm, with no note that it is not published', () => {

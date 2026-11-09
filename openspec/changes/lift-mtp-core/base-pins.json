@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "pins": {
+    "mtp-codec": {
+      "Containers are encoded little-endian": null,
+      "Containers are decoded whole or refused": null,
+      "Codes have readable names": null,
+      "Dataset primitives follow MTP's encoding": null,
+      "Standard datasets are decoded": null,
+      "ObjectInfo is encoded for sending": null
+    },
+    "mtp-session": {
+      "The session offers MTP's file operations": null,
+      "Transaction ids follow MTP's numbering": null,
+      "A read answered without data is reported": null,
+      "Every answered operation is reported": null,
+      "A refused operation leaves the session usable": null,
+      "A broken pipe stops the session": null,
+      "A stale session can be reopened": null,
+      "Operations time out": null,
+      "A write answered before its data is refused": null,
+      "A write without an answer is diagnosed": null,
+      "Data phases are reported": null
+    },
+    "mtp-transport": {
+      "WebUSB availability can be checked": null,
+      "The MTP interface is identified": null,
+      "Setup claims the interface in order": null,
+      "Setup failures name their step": null,
+      "Setup calls time out": null,
+      "Multi-transfer responses are read completely": null,
+      "A data phase's header goes in its own USB packet": null,
+      "Events are read": null,
+      "Event reading outlasts bad reads": null,
+      "The transport is released on every exit": null,
+      "Device identifiers reach only the caller": null
+    }
+  }
+}

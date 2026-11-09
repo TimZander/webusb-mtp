@@ -1,14 +1,57 @@
 {
   "name": "webusb-mtp",
-  "private": true,
-  "devDependencies": {
-    "@fission-ai/openspec": "1.14.1"
+  "version": "0.1.0",
+  "description": "Media Transfer Protocol (MTP) over WebUSB for the browser, in TypeScript.",
+  "license": "MIT",
+  "author": "Tim Zander",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TimZander/webusb-mtp.git"
+  },
+  "keywords": [
+    "mtp",
+    "webusb",
+    "usb",
+    "media-transfer-protocol",
+    "ptp"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@types/w3c-web-usb": "^1.0.14"
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build",
     "openspec": "bash scripts/sdd/openspec.sh",
     "spec:validate": "bash scripts/sdd/openspec.sh validate --all --strict",
     "spec:check": "bash scripts/sdd/check-specs.sh",
     "spec:pin": "node scripts/sdd/sdd-specs.mjs pin",
     "prepare": "node scripts/sdd/setup-agent-skills.mjs"
+  },
+  "devDependencies": {
+    "@fission-ai/openspec": "1.14.1",
+    "@types/node": "^22.10.0",
+    "typescript": "~5.7.3",
+    "vitest": "^4.1.9"
   }
 }

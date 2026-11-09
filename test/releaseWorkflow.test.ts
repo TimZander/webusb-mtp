@@ -20,6 +20,7 @@ interface Step {
 }
 interface Job {
   if?: string
+  environment?: unknown
   needs?: string | string[]
   permissions?: Record<string, string>
   env?: unknown
@@ -57,6 +58,12 @@ describe('release workflow', () => {
 
   it('publishes only from main', () => {
     expect(publishJob.if).toBe("github.ref == 'refs/heads/main'")
+  })
+
+  // "A publish waits for the owner's approval"
+  it('publishes in the npm environment, which the check job does not use', () => {
+    expect(publishJob.environment).toBe('npm')
+    expect(check.environment).toBeUndefined()
   })
 
   // "Nothing is published unless the checks pass"
@@ -132,8 +139,9 @@ describe('release workflow', () => {
   })
 
   it('gives NPM_TOKEN to the publish step alone, which runs no package scripts', () => {
-    expect(raw.match(/secrets/g)).toHaveLength(1)
-    expect(raw).toContain('secrets.NPM_TOKEN')
+    // Every ${{ }} expression that mentions secrets, however it spells the lookup.
+    const secretExpressions = raw.match(/\$\{\{[^}]*\bsecrets\b[^}]*\}\}/g) ?? []
+    expect(secretExpressions).toEqual(['${{ secrets.NPM_TOKEN }}'])
     expect(JSON.stringify(publish)).toContain('secrets.NPM_TOKEN')
     expect(workflow.env).toBeUndefined()
     for (const job of jobs) expect(job.env).toBeUndefined()
@@ -141,7 +149,11 @@ describe('release workflow', () => {
   })
 
   it('never shows the environment', () => {
-    for (const run of runs) expect(run).not.toMatch(/\b(env|printenv)\b|set -x|echo .*secrets|echo .*NODE_AUTH_TOKEN/)
+    const showsEnvironment = /(^|[;&|(]\s*)(env|printenv|set)(\s*$|\s*[;&|)]|\s+-x)|echo .*(secrets|NODE_AUTH_TOKEN)/m
+    for (const run of runs) expect(run).not.toMatch(showsEnvironment)
+    // The pattern itself: it catches the real thing and leaves look-alikes alone.
+    for (const bad of ['env', 'printenv', 'set -x', 'ls; env', 'echo $NODE_AUTH_TOKEN']) expect(bad).toMatch(showsEnvironment)
+    for (const ok of ['npx cross-env CI=1 npm test', 'node --env-file=.env x.js', 'npm run setup']) expect(ok).not.toMatch(showsEnvironment)
   })
 
   // "Releases run one at a time"
@@ -154,11 +166,13 @@ describe('release workflow', () => {
 // "Releasing is documented"
 describe('README', () => {
   const readme = readFileSync(fileURLToPath(new URL('../README.md', import.meta.url)), 'utf8')
-  const releasing = readme.split(/^## Releasing$/m)[1]?.split(/^## /m)[0] ?? ''
+  const section = (title: string) => readme.split(new RegExp(`^## ${title}$`, 'm'))[1]?.split(/^## /m)[0] ?? ''
+  const install = section('Install')
+  const releasing = section('Releasing')
 
   it('installs from npm, with no note that it is not published', () => {
-    expect(readme).toContain('npm install webusb-mtp')
-    expect(readme).not.toMatch(/not published/i)
+    expect(install).toContain('npm install webusb-mtp')
+    expect(install).not.toMatch(/not published|not yet published|git checkout|local build/i)
   })
 
   it('says how a release is made', () => {
@@ -167,6 +181,8 @@ describe('README', () => {
     expect(releasing).toContain('release.yml')
     expect(releasing).toContain('main')
     expect(releasing).toContain('NPM_TOKEN')
+    expect(releasing).toMatch(/approv/i)
+    expect(releasing).toContain('`npm` environment')
     expect(releasing).toMatch(/trusted publish/i)
   })
 })

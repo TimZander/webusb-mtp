@@ -7,6 +7,7 @@
       "The version in package.json is published publicly with provenance": null,
       "The release authenticates with trusted publishing or the token": null,
       "The release's reach is kept small": null,
+      "Releases run one at a time": null,
       "Releasing is documented": null
     }
   }

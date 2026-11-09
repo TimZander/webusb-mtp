@@ -19,17 +19,21 @@ releases; garmin-mtp's release (it gets the same workflow later).
 - **Started by hand (`workflow_dispatch`), publish job guarded by `github.ref == 'refs/heads/main'`.**
   A release is an outward act the owner decides on; a tag trigger would let anyone who can push a
   tag publish, and a merge trigger would publish every merge.
-- **Checks as their own steps; publish with `--ignore-scripts`.** The workflow runs `npm ci`, the
-  type check, the tests and the build as separate steps with no secret, then
-  `npm publish --access public --provenance --ignore-scripts` with the token. Letting `npm publish`
-  run `prepublishOnly` would put the token in the environment of every test and dev dependency;
-  skipping it publishes the `dist` the build step just made. (Spec review round 1.)
+- **Two jobs: check, then publish.** The check job (`contents: read`) runs `npm ci`, the type
+  check, the tests and the build, and uploads `dist` as an artifact. The publish job (`id-token:
+  write`) checks out, downloads `dist`, and runs `npm publish --access public --provenance
+  --ignore-scripts` with the token; it installs no dependencies and runs no project code. In one
+  job, every step, dependency install scripts included, could request the OIDC token that trusted
+  publishing accepts (conformance review R1), and letting `npm publish` run `prepublishOnly` would
+  put the token beside every test and dev dependency (spec review round 1).
 - **Trusted publishing first, token as fallback.** npm 11.5.1 and later, in GitHub Actions with
   `id-token: write`, try OIDC first and use `NODE_AUTH_TOKEN` only when no trusted publisher
-  matches. The workflow installs `npm@^11.5.1`, sets `registry-url` on
+  matches. The publish job installs `npm@11.21.1` (exact: it is the code that holds the credential;
+  released 2026-10-15), sets `registry-url` on
   `setup-node` (which writes the `.npmrc` that reads `NODE_AUTH_TOKEN`), and passes the secret as
   `NODE_AUTH_TOKEN`.
-- **Actions pinned to commit SHAs** (`actions/checkout` v4.2.2, `actions/setup-node` v4.4.0), checkout
+- **Actions pinned to commit SHAs** (`actions/checkout` v4.2.2, `actions/setup-node` v4.4.0,
+  `actions/upload-artifact` v4.6.2, `actions/download-artifact` v4.3.0), checkout
   without persisted credentials and no npm cache, since this workflow holds a publishing
   credential; `ci.yml` keeps its tags and cache.
 - **Plain versions only.** Prereleases (`1.2.3-beta.1`) aren't in scope; the release publishes to

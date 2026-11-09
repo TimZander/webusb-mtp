@@ -22,15 +22,20 @@ job SHALL run only when started on `main`. No push, pull request, tag or schedul
 - **THEN** the release workflow doesn't run
 
 ### Requirement: Nothing is published unless the checks pass
-Before the publish step, the release SHALL install from the lock file and run the type check, the
-tests and the build as steps of their own, and SHALL publish nothing when any of them fails.
+A check job SHALL install from the lock file and run the type check, the tests and the build as
+steps of their own. The publish job SHALL need the check job, and no job or step SHALL continue on
+error or run regardless of an earlier failure, so a failing check publishes nothing.
 
 #### Scenario: A test fails
 - **WHEN** a release is started and one test fails
-- **THEN** the workflow fails at the test step and no version is published
+- **THEN** the check job fails at the test step, the publish job doesn't run, and no version is published
+
+#### Scenario: Workflow file checked for failure handling
+- **WHEN** the workflow file is read by the repository's tests
+- **THEN** the publish job needs the check job, and no job or step has `continue-on-error` or an `if:` with `always()`, `failure()` or `cancelled()`
 
 ### Requirement: The version in package.json is published publicly with provenance
-The release SHALL publish the version `package.json` holds, built by the build step, with public
+The release SHALL publish the version `package.json` holds, built by the check job's build, with public
 access and an npm provenance statement linking it to the workflow run. It SHALL never force a
 publish or unpublish, so a version npm already holds fails the release.
 
@@ -43,8 +48,8 @@ publish or unpublish, so a version npm already holds fails the release.
 - **THEN** the release fails and npm's `1.2.3` is unchanged
 
 ### Requirement: The release authenticates with trusted publishing or the token
-The release SHALL publish to `https://registry.npmjs.org` with an npm that supports trusted
-publishing (11.5.1 or later), using trusted publishing when the package has this repository's
+The release SHALL publish to `https://registry.npmjs.org` with an exact npm version that supports
+trusted publishing (11.5.1 or later), using trusted publishing when the package has this repository's
 release workflow as its trusted publisher, and otherwise the `NPM_TOKEN` repository secret.
 
 #### Scenario: First publish
@@ -56,17 +61,30 @@ release workflow as its trusted publisher, and otherwise the `NPM_TOKEN` reposit
 - **THEN** the release publishes through trusted publishing
 
 ### Requirement: The release's reach is kept small
-The workflow SHALL grant exactly `contents: read` and `id-token: write` at workflow level, with no
-job-level grants; pin every action to a full commit SHA; check out without keeping credentials and
-use no cache. `NPM_TOKEN` SHALL reach only the publish step, which runs no package scripts.
+The workflow SHALL grant `contents: read` only, and the publish job alone `id-token: write`. The
+publish job SHALL run no project code: it takes the check job's build and runs no install, test or
+build. Every action SHALL be pinned to a full commit SHA, checkouts keep no credentials, nothing is
+cached, and `NPM_TOKEN` reaches only the publish step, which runs no package scripts.
 
 #### Scenario: Workflow file checked
 - **WHEN** the workflow file is read by the repository's tests
-- **THEN** its permissions are exactly those two at workflow level and none at job level, every `uses:` names a 40-character SHA, checkout has `persist-credentials: false`, no step caches, and `secrets.NPM_TOKEN` appears only in the publish step, whose command has `--ignore-scripts`
+- **THEN** the workflow grants `contents: read`, the check job adds nothing, the publish job grants `contents: read` and `id-token: write`, every `uses:` names a 40-character SHA, checkouts have `persist-credentials: false`, no step caches, and the publish job runs no `npm ci`, `npm test` or `npm run`
+
+#### Scenario: Secrets reach only the publish step
+- **WHEN** the workflow file is read by the repository's tests
+- **THEN** the only `secrets` expression in it is `secrets.NPM_TOKEN` in the publish step's `env`, no workflow-level or job-level `env` exists, and the publish command has `--ignore-scripts`
 
 #### Scenario: No step shows the environment
 - **WHEN** the workflow file's run commands are read
 - **THEN** none runs `env`, `printenv`, `set -x` or echoes a secret
+
+### Requirement: Releases run one at a time
+A release SHALL wait for one already running to finish rather than run beside it or cancel it, and
+each job SHALL stop after 15 minutes.
+
+#### Scenario: Started twice
+- **WHEN** the owner starts a release while another is running
+- **THEN** the second waits until the first has finished
 
 ### Requirement: Releasing is documented
 The README SHALL install the package from npm, and SHALL say how a release is made: bump the

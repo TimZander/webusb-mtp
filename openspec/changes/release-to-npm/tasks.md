@@ -1,6 +1,6 @@
 ## 1. Tests first
 
-- [x] 1.1 Add `yaml` as a dev dependency and `test/releaseWorkflow.test.ts`: manual trigger only, publish job guarded to `main`, workflow-level permissions exactly `contents: read` + `id-token: write` and none per job, every action pinned to a SHA, `persist-credentials: false`, no cache, `registry-url` set, `npm ci`, type check, tests and build as steps before `npm publish --access public --provenance --ignore-scripts`, `NPM_TOKEN` only in that step as `NODE_AUTH_TOKEN`, `npm@^11.5.1` installed, Node 22, no `env`/`printenv`/`set -x`/`--force`/`unpublish`
+- [x] 1.1 Add `yaml` as a dev dependency and `test/releaseWorkflow.test.ts`: manual trigger only, publish job guarded to `main`, a check job (install, type check, tests, build, upload `dist`) and a publish job that needs it, `contents: read` for the workflow and `id-token: write` for the publish job alone, the publish job's only commands an exact npm (≥ 11.5.1) and `npm publish --access public --provenance --ignore-scripts`, nothing that ignores a failure, every action pinned to a SHA, `persist-credentials: false`, no cache, `registry-url` set, `NPM_TOKEN` only in the publish step as `NODE_AUTH_TOKEN`, one release at a time, 15-minute jobs, Node 22, no `env`/`printenv`/`set -x`/`--force`/`unpublish`
 - [x] 1.2 A test that the README installs with `npm install webusb-mtp` with no "not published" note, and that its "Releasing" section names the version bump, the workflow, `NPM_TOKEN` and trusted publishing
 - [x] 1.3 See them fail before the workflow and README exist
 

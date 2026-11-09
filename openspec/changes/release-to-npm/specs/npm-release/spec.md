@@ -62,13 +62,13 @@ release workflow as its trusted publisher, and otherwise the `NPM_TOKEN` reposit
 
 ### Requirement: The release's reach is kept small
 The workflow SHALL grant `contents: read` only, and the publish job alone `id-token: write`. The
-publish job SHALL run no project code: it takes the check job's build and runs no install, test or
-build. Every action SHALL be pinned to a full commit SHA, checkouts keep no credentials, nothing is
+publish job SHALL run no project code: it takes the check job's build, and its only commands are
+installing the exact npm and publishing. Every action SHALL be pinned to a full commit SHA, checkouts keep no credentials, nothing is
 cached, and `NPM_TOKEN` reaches only the publish step, which runs no package scripts.
 
 #### Scenario: Workflow file checked
 - **WHEN** the workflow file is read by the repository's tests
-- **THEN** the workflow grants `contents: read`, the check job adds nothing, the publish job grants `contents: read` and `id-token: write`, every `uses:` names a 40-character SHA, checkouts have `persist-credentials: false`, no step caches, and the publish job runs no `npm ci`, `npm test` or `npm run`
+- **THEN** the workflow grants `contents: read`, the check job adds nothing, the publish job grants `contents: read` and `id-token: write`, every `uses:` names a 40-character SHA, checkouts have `persist-credentials: false`, no step caches, and the publish job's run commands are exactly the npm install and the publish
 
 #### Scenario: Secrets reach only the publish step
 - **WHEN** the workflow file is read by the repository's tests
@@ -80,7 +80,8 @@ cached, and `NPM_TOKEN` reaches only the publish step, which runs no package scr
 
 ### Requirement: Releases run one at a time
 A release SHALL wait for one already running to finish rather than run beside it or cancel it, and
-each job SHALL stop after 15 minutes.
+each job SHALL stop after 15 minutes. GitHub keeps one waiting release: a third start replaces
+the one waiting, never the one running.
 
 #### Scenario: Started twice
 - **WHEN** the owner starts a release while another is running

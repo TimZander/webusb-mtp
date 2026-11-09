@@ -3,6 +3,7 @@
   "pins": {
     "npm-release": {
       "A release is started by hand on the default branch": null,
+      "A publish waits for the owner's approval": null,
       "Nothing is published unless the checks pass": null,
       "The version in package.json is published publicly with provenance": null,
       "The release authenticates with trusted publishing or the token": null,

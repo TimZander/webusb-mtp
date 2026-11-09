@@ -36,6 +36,10 @@ releases; garmin-mtp's release (it gets the same workflow later).
   `actions/upload-artifact` v4.6.2, `actions/download-artifact` v4.3.0), checkout
   without persisted credentials and no npm cache, since this workflow holds a publishing
   credential; `ci.yml` keeps its tags and cache.
+- **An `npm` environment gates the publish job.** Its required reviewer is the owner, and its
+  deployment branches are `main` only. The owner creates it in the repository's settings (no tool
+  here can); until it exists GitHub creates it on first use with no protection, so it must be set
+  up before the first release. npm's trusted publisher names the environment too.
 - **Plain versions only.** Prereleases (`1.2.3-beta.1`) aren't in scope; the release publishes to
   `latest`.
 - **Kept in this repository, not ci-recipes, for now** (owner asked). A shared workflow would let
@@ -53,7 +57,8 @@ releases; garmin-mtp's release (it gets the same workflow later).
   it, and the owner sees it at the second release.
 - [A token that may bypass two-factor authentication sits in the repository's secrets until
   trusted publishing is set up] → short expiry (7 days), deleted after the first publish.
-- [Anyone with write access can run the workflow on `main`] → only the owner has write access.
+- [Anyone or any app with Actions access can start the release on `main`, the Claude GitHub App
+  included] → the publish job waits in the `npm` environment for the owner's approval.
 
 ## Open Questions
 
@@ -63,7 +68,9 @@ releases; garmin-mtp's release (it gets the same workflow later).
    checks it (task 4.2).
 
 1. **Require an approval before publishing** (a GitHub environment with the owner as reviewer)?
-   *Assumption:* no; only the owner can start the workflow, so a second click adds nothing yet.
+   **Answered (owner, 2026-11-09): yes** (ADR 0013). The code review found that apps with Actions
+   access, the Claude GitHub App included, can start the release, so "only the owner can start it"
+   was wrong.
 2. **Tag the released commit** (`v0.1.0`) from the workflow? *Assumption:* not now; it needs
    `contents: write`, which this change avoids. A later change can add it.
 3. **Node version for releases.** *Assumption:* 22, as CI.

@@ -21,6 +21,19 @@ job SHALL run only when started on `main`. No push, pull request, tag or schedul
 - **WHEN** a commit is pushed, a pull request is opened or a tag is pushed
 - **THEN** the release workflow doesn't run
 
+### Requirement: A publish waits for the owner's approval
+The publish job SHALL run in the GitHub environment `npm`, whose required reviewer is the owner, so
+a started release publishes only after the owner approves it in GitHub. The trusted publisher on
+npm SHALL name that environment.
+
+#### Scenario: Release started by someone else
+- **WHEN** a collaborator or an app with Actions access starts the release on `main`
+- **THEN** the publish job waits for the owner's approval, and nothing is published until the owner approves
+
+#### Scenario: Workflow file checked for the environment
+- **WHEN** the workflow file is read by the repository's tests
+- **THEN** the publish job's environment is `npm`, and the check job has none
+
 ### Requirement: Nothing is published unless the checks pass
 A check job SHALL install from the lock file and run the type check, the tests and the build as
 steps of their own. The publish job SHALL need the check job, and no job or step SHALL continue on
@@ -89,9 +102,9 @@ the one waiting, never the one running.
 
 ### Requirement: Releasing is documented
 The README SHALL install the package from npm, and SHALL say how a release is made: bump the
-version in a pull request, merge it, then run the release workflow on `main`; and how the first
+version in a pull request, merge it, run the release workflow on `main` and approve it; and how the first
 publish's token gives way to trusted publishing.
 
 #### Scenario: README read
 - **WHEN** someone reads the README
-- **THEN** its install step is `npm install webusb-mtp` with no note that it isn't published, and its "Releasing" section names the version bump, the workflow to run on `main`, the `NPM_TOKEN` secret for the first publish, and trusted publishing after it
+- **THEN** its install step is `npm install webusb-mtp` with no note that it isn't published, and its "Releasing" section names the version bump, the workflow to run on `main`, the approval in the `npm` environment, the `NPM_TOKEN` secret for the first publish, and trusted publishing after it

@@ -18,5 +18,6 @@
 
 ## 4. Owner, after merge
 
+- [ ] 4.0 Before the first release: Settings → Environments → New environment `npm`, required reviewer the owner, deployment branches `main` only
 - [ ] 4.1 Run the release on `main`; set up trusted publishing for `webusb-mtp` on npmjs.com; delete the token and the `NPM_TOKEN` secret
 - [ ] 4.2 The next release, with no secret, publishes through trusted publishing (open question 0)

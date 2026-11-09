@@ -47,3 +47,11 @@ A test looked for `secrets.NPM_TOKEN` outside the publish step; `secrets['NPM_TO
 **Do instead:** test a workflow against what it may contain (count every `secrets` mention, allowlist
 a sensitive job's commands), and try the attacker's edits against the tests before trusting them.
 
+## 2026-11-09 — "Only the owner can start it" forgot the apps (release-to-npm)
+
+The design waved off an approval gate because only the owner has write access. Apps count too: the
+Claude GitHub App can dispatch workflows, so any session with its tools could start a release. A
+fresh code review caught it; the spec and conformance reviews had accepted the claim. **Do
+instead:** for an outward action, list who and what can trigger it (people, apps, bots, other
+workflows) before deciding it needs no gate, and prefer a gate the owner alone can pass.
+

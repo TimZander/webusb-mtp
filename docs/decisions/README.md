@@ -18,3 +18,4 @@ one. A superseded record stays, with its status set to `superseded by NNNN`.
 | [0010](0010-check-job-then-publish-job.md) | A check job without credentials, then a publish job that runs no project code | accepted |
 | [0011](0011-release-workflow-stays-in-this-repository.md) | The release workflow stays in this repository, not in ci-recipes, for now | proposed |
 | [0012](0012-how-release-to-npm-was-run.md) | How `release-to-npm` was reviewed | accepted |
+| [0013](0013-publish-waits-for-the-owners-approval.md) | A publish waits for the owner's approval in the `npm` environment | accepted |

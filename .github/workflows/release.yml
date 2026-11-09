@@ -1,7 +1,7 @@
 name: release
 
 # Publishes the version in package.json to npm (spec: npm-release). Started by hand from the
-# Actions tab; publishes from main only. The check job installs, checks and builds with no
+# Actions tab; publishes from main only, after the owner approves it in the npm environment. The check job installs, checks and builds with no
 # credential. The publish job runs no project code: it takes the check job's dist and publishes it,
 # through npm's trusted publishing when it is set up for this workflow, else with the NPM_TOKEN
 # secret, which only its publish step sees.
@@ -43,6 +43,8 @@ jobs:
   publish:
     needs: check
     if: github.ref == 'refs/heads/main'
+    # Waits for the owner's approval (required reviewer on the npm environment).
+    environment: npm
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:

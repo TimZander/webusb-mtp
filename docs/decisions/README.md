@@ -20,3 +20,4 @@ one. A superseded record stays, with its status set to `superseded by NNNN`.
 | [0012](0012-how-release-to-npm-was-run.md) | How `release-to-npm` was reviewed | accepted |
 | [0013](0013-publish-waits-for-the-owners-approval.md) | A publish waits for the owner's approval in the `npm` environment | accepted |
 | [0014](0014-trusted-publisher-may-publish.md) | The trusted publisher may publish, not only stage | accepted |
+| [0015](0015-update-sdd-to-0-4-4.md) | Update sdd from 0.3.3 to 0.4.4 | accepted |
